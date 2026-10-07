@@ -52,7 +52,17 @@ gttc
 当脚本启用时，会在 Xray 的 DNS 配置中针对 geosite:google 及相关域名添加特定的 clientSubnet 段（例如台湾 168.95.1.1/24、美国 64.233.160.0/24、英國 81.2.69.0/24［實驗性］）。Google DoH 收到请求后，会将请求分配至对应该子网的最佳 CDN 节点。
 
 ### 多维地理位置保活 (Keep-Alive)
-脚本会在后台启动 gttc-ping 服务，以随机间隔（2~5 分钟）向 Google 的位置与状态接口（如 generate_204、geolocate）发送带有特定语言标头（Accept-Language）与移动端 UA 的请求，使 Google 持续记录并锁定当前 IP 的地理位置。
+脚本会在后台启动 gttc-ping 服务，定期向 Google 的位置与状态接口（如 generate_204、geolocate）发送带有特定语言标头（Accept-Language）与移动端 UA 的请求，使 Google 持续记录并锁定当前 IP 的地理位置。（注意：上游文档曾述为「随机间隔 2~5 分钟」，实际代码实现为固定的 10 分钟循环 `sleep 600`）。
+
+---
+
+## 🧪 真实环境实测与验证（UK 部署）
+
+在真实英國 VPS 环境（panstar-uk, AS3257, IP: `86.53.183.137`）的实测中，获得了如下实证观察：
+
+1. **HTTP 保活机制有效**：经过约 10–14 小时持续运行后台保活脚本（`gttc-ping`，携带 `Accept-Language: en-GB,en;q=0.9` 及 Android 移动端 User-Agent），Google 成功将其位置分类重新校准回 GBR / en-GB（Google.co.uk 页脚识别生效）。实测证实 HTTP keep-alive 打卡机制在实际纠正与校准 Google IP 定位方面是行之有效的。
+2. **校准的关键驱动因素**：观察表明，本次定位校准主要由持续的 HTTP 遥测与 check-in keepalive 请求驱动，而非单纯依赖 DNS ECS 伪装宣告。特别是在 Xray v26+ 版本中，DNS 配置已忽略 `clientSubnet` 并改用 `clientIp`，且测试期间 Xray 并未拦截线上代理流量。
+3. **轮询间隔说明**：上游文档提及的随机 2–5 分钟发包与实际实现存在差异，代码实际以固定 10 分钟（`sleep 600`）周期循环。实测表明 10 分钟周期的持续打卡已足够触发 Google 定位数据库的重新校准。
 
 ## 📖 常见问题 (FAQ)
 ### Q1: EDNS 宣告与传统 DNS 解锁（SmartDNS/SNI Proxy）有什么区别？
