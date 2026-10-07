@@ -1,7 +1,7 @@
 #!/bin/bash
 # =========================================================
 # GoogleToThisCountry (GTTC) 管理脚本
-# 支持国家/地区: 🇹🇼 台湾 | 🇨🇳 中国大陆 | 🇯🇵 日本 | 🇲🇴 澳门 | 🇺🇸 美国
+# 支持国家/地区: 🇹🇼 台湾 | 🇨🇳 中国大陆 | 🇯🇵 日本 | 🇲🇴 澳门 | 🇺🇸 美国 | 🇬🇧 英國 (實驗性)
 # 快捷指令: gttc
 # =========================================================
 
@@ -79,8 +79,8 @@ setup_shortcut() {
     SCRIPT_SOURCE="$0"
     if [ "$SCRIPT_SOURCE" = "bash" ] || [ "$SCRIPT_SOURCE" = "-bash" ] || [[ "$SCRIPT_SOURCE" == *"/dev/fd/"* ]] || [ "$SCRIPT_SOURCE" = "/dev/stdin" ]; then
         echo -e "${YELLOW}正在持久化安装脚本至 $LOCAL_SCRIPT ...${NC}"
-        curl -sSL "https://raw.githubusercontent.com/edmond1294/GoogleToThisCountry/main/gttc.sh" -o "$LOCAL_SCRIPT" || \
-        wget -qO "$LOCAL_SCRIPT" "https://raw.githubusercontent.com/edmond1294/GoogleToThisCountry/main/gttc.sh"
+        curl -sSL "https://raw.githubusercontent.com/wongjai/GoogleToThisCountry/main/gttc.sh" -o "$LOCAL_SCRIPT" || \
+        wget -qO "$LOCAL_SCRIPT" "https://raw.githubusercontent.com/wongjai/GoogleToThisCountry/main/gttc.sh"
     else
         if [ "$(readlink -f "$SCRIPT_SOURCE" 2>/dev/null)" != "$LOCAL_SCRIPT" ]; then
             cp -f "$(readlink -f "$SCRIPT_SOURCE")" "$LOCAL_SCRIPT" 2>/dev/null || true
@@ -324,8 +324,9 @@ enable_target_country() {
     echo " 3. 🇯🇵 日本 (Japan)"
     echo " 4. 🇲🇴 澳门 (Macao)"
     echo " 5. 🇺🇸 美国 (United States)"
+    echo " 6. 🇬🇧 英國 (United Kingdom) [實驗性]"
     echo "================================================="
-    read -p "请选择 [1-5]: " c_choice
+    read -p "请选择 [1-6]: " c_choice
 
     case "$c_choice" in
         1)
@@ -357,6 +358,13 @@ enable_target_country() {
             DOH_SERVER="https://dns.google/dns-query"
             ECS_IP="64.233.160.0/24"
             LANG_HEADER="en-US,en;q=0.9"
+            ;;
+        6)
+            # ECS 81.2.69.0/24: inside RIPE inetnum 81.2.64.0/18 (country GB, AS20712); see README
+            COUNTRY_NAME="🇬🇧 United Kingdom"
+            DOH_SERVER="https://dns.google/dns-query"
+            ECS_IP="81.2.69.0/24"
+            LANG_HEADER="en-GB,en;q=0.9"
             ;;
         *)
             echo -e "${RED}无效选择，取消操作！${NC}"
